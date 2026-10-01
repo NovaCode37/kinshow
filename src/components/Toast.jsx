@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef } f
 
 const Ctx = createContext();
 
+const MAX_TOASTS = 3;
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const timersRef = useRef(new Map());
@@ -25,12 +27,32 @@ export function ToastProvider({ children }) {
     const action = options.action;
 
     const id = Date.now() + Math.random();
-    setToasts(p => [...p, { id, msg, type, action }]);
+
+    setToasts(p => {
+      const next = [...p, { id, msg, type, action }];
+
+      if (next.length > MAX_TOASTS) {
+        const removed = next.slice(0, next.length - MAX_TOASTS);
+
+        removed.forEach(t => {
+          const timer = timersRef.current.get(t.id);
+          if (timer) {
+            clearTimeout(timer);
+            timersRef.current.delete(t.id);
+          }
+        });
+
+        return next.slice(-MAX_TOASTS);
+      }
+
+      return next;
+    });
 
     const timer = setTimeout(() => {
       timersRef.current.delete(id);
       setToasts(p => p.filter(t => t.id !== id));
     }, duration);
+
     timersRef.current.set(id, timer);
   }, []);
 
