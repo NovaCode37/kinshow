@@ -22,6 +22,9 @@ export default function BlogPost() {
 
   const allPosts = getBlogPosts();
   const relatedPosts = allPosts.filter(p => p.slug !== post.slug).slice(0, 3);
+  const postUrl = `https://kinshow.vercel.app/blog/${post.slug}`;
+  const dateModified = post.modified || post.date;
+  const wordCount = post.content.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <main id="content" tabIndex={-1} className="page">
@@ -29,19 +32,38 @@ export default function BlogPost() {
         title={post.title}
         description={post.excerpt}
         image={post.image}
-        url={`https://kinshow.vercel.app/blog/${post.slug}`}
+        imageAlt={post.title}
+        url={postUrl}
         type="article"
+        article={{
+          publishedTime: post.date,
+          modifiedTime: dateModified,
+          author: `https://kinshow.vercel.app/about`,
+          section: post.category,
+          tags: post.tags
+        }}
       />
       <StructuredData data={{
         '@context': 'https://schema.org',
-        '@type': 'Article',
+        '@type': 'BlogPosting',
         headline: post.title,
         description: post.excerpt,
+        image: post.image ? [post.image] : undefined,
         datePublished: post.date,
-        author: { '@type': 'Organization', name: 'Kinshow' },
-        publisher: { '@type': 'Organization', name: 'Kinshow', url: 'https://kinshow.vercel.app' },
-        image: post.image,
-        url: `https://kinshow.vercel.app/blog/${post.slug}`
+        dateModified,
+        author: { '@type': 'Organization', name: post.author, url: 'https://kinshow.vercel.app/about' },
+        publisher: {
+          '@type': 'Organization',
+          name: 'Kinshow',
+          url: 'https://kinshow.vercel.app',
+          logo: { '@type': 'ImageObject', url: 'https://kinshow.vercel.app/og-default.png' }
+        },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+        wordCount,
+        articleSection: post.category,
+        keywords: post.tags?.join(', '),
+        inLanguage: 'en-us',
+        url: postUrl
       }} />
       <StructuredData data={breadcrumbSchema([
         { name: 'Home', url: 'https://kinshow.vercel.app/' },

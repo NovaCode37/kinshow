@@ -1,8 +1,59 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { BLOG_POSTS } from './src/blogData.js';
 
 const DIST = join(process.cwd(), 'dist');
 const indexHtml = readFileSync(join(DIST, 'index.html'), 'utf-8');
+const SITE = 'https://kinshow.vercel.app';
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const blogRoutes = BLOG_POSTS.map(post => {
+  const postUrl = `${SITE}/blog/${post.slug}`;
+  const dateModified = post.modified || post.date;
+  const wordCount = post.content.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  const schema = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.image ? [post.image] : undefined,
+    datePublished: post.date,
+    dateModified,
+    author: { '@type': 'Organization', name: post.author, url: `${SITE}/about` },
+    publisher: { '@type': 'Organization', name: 'Kinshow', url: SITE, logo: { '@type': 'ImageObject', url: `${SITE}/og-default.png` } },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+    wordCount,
+    articleSection: post.category,
+    keywords: post.tags?.join(', '),
+    inLanguage: 'en-us',
+    url: postUrl
+  });
+  const breadcrumb = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE}/blog` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: postUrl }
+    ]
+  });
+  return {
+    path: `/blog/${post.slug}`,
+    title: `${post.title} | Kinshow`,
+    description: post.excerpt,
+    canonical: postUrl,
+    type: 'article',
+    ogImage: post.image,
+    publishedTime: post.date,
+    modifiedTime: dateModified,
+    section: post.category,
+    content: `
+      <h1 style="position:absolute;left:-9999px">${esc(post.title)}</h1>
+      <p style="position:absolute;left:-9999px">${esc(post.excerpt)}</p>
+      <script type="application/ld+json">${schema}</script>
+      <script type="application/ld+json">${breadcrumb}</script>`
+  };
+});
 
 const routes = [
   {
@@ -87,7 +138,7 @@ const routes = [
   },
   {
     path: '/blog',
-    title: 'Blog - Kinshow',
+    title: 'Blog — Movie & TV Guides, Lists & Reviews | Kinshow',
     description: 'Read the latest articles about movies, TV shows, and streaming on Kinshow. Guides, recommendations, lists, and tips for finding what to watch.',
     canonical: 'https://kinshow.vercel.app/blog',
     type: 'website',
@@ -95,20 +146,32 @@ const routes = [
       <h1 style="position:absolute;left:-9999px">Kinshow Blog - Movie & TV Articles</h1>
       <p style="position:absolute;left:-9999px">Read articles about movies, TV shows, ratings, and cinema discovery on Kinshow. Find guides, recommendations, and lists.</p>
       <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://kinshow.vercel.app/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://kinshow.vercel.app/blog"}]}</script>`
-  }
+  },
+  ...blogRoutes
 ];
 
 routes.forEach(route => {
   let html = indexHtml;
 
-  html = html.replace(/<title>[^<]*<\/title>/, `<title>${route.title}</title>`);
-  html = html.replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${route.description}"`);
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(route.title)}</title>`);
+  html = html.replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${esc(route.description)}"`);
   html = html.replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${route.canonical}"`);
-  html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${route.title}"`);
-  html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${route.description}"`);
+  html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${esc(route.title)}"`);
+  html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${esc(route.description)}"`);
   html = html.replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${route.canonical}"`);
-  html = html.replace(/<meta name="twitter:title" content="[^"]*"/, `<meta name="twitter:title" content="${route.title}"`);
-  html = html.replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${route.description}"`);
+  html = html.replace(/<meta name="twitter:title" content="[^"]*"/, `<meta name="twitter:title" content="${esc(route.title)}"`);
+  html = html.replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${esc(route.description)}"`);
+  if (route.ogImage) {
+    html = html.replace(/<meta property="og:image" content="[^"]*"/, `<meta property="og:image" content="${route.ogImage}"`);
+    html = html.replace(/<meta name="twitter:image" content="[^"]*"/, `<meta name="twitter:image" content="${route.ogImage}"`);
+    html = html.replace(/<meta property="og:image:width" content="[^"]*"/, '<meta property="og:image:width" content="1200" />');
+  }
+  if (route.type === 'article') {
+    html = html.replace(
+      /<meta property="og:type" content="[^"]*"\s*\/>/,
+      `<meta property="og:type" content="article" />\n    <meta property="article:published_time" content="${route.publishedTime}" />\n    <meta property="article:modified_time" content="${route.modifiedTime}" />\n    <meta property="article:section" content="${esc(route.section)}" />`
+    );
+  }
   html = html.replace('<div id="root"></div>', `<div id="root">${route.content}</div>`);
 
   const dir = route.path === '/' ? DIST : join(DIST, route.path);

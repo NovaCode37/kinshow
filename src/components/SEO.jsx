@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 const SITE = 'https://kinshow.vercel.app';
 const DEFAULT_DESC = 'Discover movies and TV shows on Kinshow. Explore ratings, cast, reviews, and find where to stream.';
 
-export function SEO({ title, description, image, url, type = 'website', schema }) {
+export function SEO({ title, description, image, imageAlt, url, type = 'website', article }) {
   const t = title ? `${title} | Kinshow` : 'Kinshow - Cinema Discovery';
   const d = description || DEFAULT_DESC;
   const u = url || SITE;
@@ -26,17 +26,34 @@ export function SEO({ title, description, image, url, type = 'website', schema }
       <meta property="og:title" content={t} />
       <meta property="og:description" content={d} />
       <meta property="og:image" content={img} />
+      <meta property="og:image:alt" content={imageAlt || title || 'Kinshow'} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:url" content={u} />
       <meta property="og:site_name" content="Kinshow" />
       <meta property="og:locale" content="en_IN" />
+      {type === 'article' && article?.publishedTime && (
+        <meta property="article:published_time" content={article.publishedTime} />
+      )}
+      {type === 'article' && article?.modifiedTime && (
+        <meta property="article:modified_time" content={article.modifiedTime} />
+      )}
+      {type === 'article' && article?.author && (
+        <meta property="article:author" content={article.author} />
+      )}
+      {type === 'article' && article?.section && (
+        <meta property="article:section" content={article.section} />
+      )}
+      {type === 'article' && article?.tags?.map(tag => (
+        <meta key={tag} property="article:tag" content={tag} />
+      ))}
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:site" content="@kinshow" />
       <meta name="twitter:title" content={t} />
       <meta name="twitter:description" content={d} />
       <meta name="twitter:image" content={img} />
+      <meta name="twitter:image:alt" content={imageAlt || title || 'Kinshow'} />
     </Helmet>
   );
 }

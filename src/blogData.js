@@ -4,9 +4,11 @@ export const BLOG_POSTS = [
     title: 'Top 10 Binge-Worthy Series to Watch This October',
     excerpt: 'From the autumn woods of Over the Garden Wall to the Upside Down — ten atmospheric series to binge this October, ranked and linked straight to their pages on Kinshow.',
     date: '2026-10-01',
+    modified: '2026-10-01',
     author: 'Kinshow Editorial',
     category: 'Lists',
     readTime: '8 min',
+    tags: ['october', 'halloween', 'binge-worthy', 'tv shows', 'over the garden wall', 'stranger things', 'watchlist'],
     content: `
       <p>October is peak television season: the nights are longer, the lights are lower, and every show suddenly feels more atmospheric. We picked <strong>10 binge-worthy series</strong> that belong on your watch list this month — ranked, with links straight to their Kinshow pages so you can start watching in one click.</p>
 
@@ -53,6 +55,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'best-movies-to-watch-right-now',
+    tags: ['movies', 'recommendations', '2026', 'movie night'],
     title: 'Best Movies to Watch Right Now in 2026',
     excerpt: 'Looking for the best movies to watch right now? Here are our top picks across every genre, from action-packed blockbusters to heartfelt dramas.',
     date: '2026-09-10',
@@ -95,6 +98,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'best-tv-shows-binge-worthy',
+    tags: ['tv shows', 'binge-worthy', 'weekend', 'drama', 'comedy'],
     title: 'Best TV Shows to Binge-Watch This Weekend',
     excerpt: 'From gripping dramas to hilarious comedies, these TV shows are perfect for a weekend binge session. Find your next obsession on Kinshow.',
     date: '2026-09-08',
@@ -130,6 +134,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'movie-ratings-explained',
+    tags: ['ratings', 'guide', 'imdb', 'omdb', 'tvmaze'],
     title: 'How Movie Ratings Work: A Complete Guide',
     excerpt: 'Ever wondered how movie ratings are calculated? Learn about IMDb, OMDb, Rotten Tomatoes, and how Kinshow aggregates ratings for you.',
     date: '2026-09-05',
@@ -162,6 +167,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'marvel-mcu-movies-ranked',
+    tags: ['marvel', 'mcu', 'ranking', 'movies', 'superhero'],
     title: 'All Marvel MCU Movies Ranked from Best to Worst',
     excerpt: 'Ranking every Marvel Cinematic Universe movie from the Infinity Saga to the Multiverse Saga. See where your favorites land on Kinshow.',
     date: '2026-09-01',
@@ -195,6 +201,7 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'how-to-find-movie-to-watch',
+    tags: ['guide', 'recommendations', 'watchlist', 'discover'],
     title: 'How to Find the Perfect Movie to Watch Every Time',
     excerpt: 'Stop scrolling endlessly. Learn how to use Kinshow to find the perfect movie based on your mood, genre preferences, and ratings.',
     date: '2026-08-28',

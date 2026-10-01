@@ -17,11 +17,28 @@ export default function Blog() {
   return (
     <main id="content" tabIndex={-1} className="page">
       <SEO
-        title="Blog"
+        title="Blog — Movie & TV Guides, Lists & Reviews"
         description="Read the latest articles about movies, TV shows, and streaming on Kinshow. Guides, recommendations, lists, and tips for finding what to watch."
         url="https://kinshow.vercel.app/blog"
       />
       <StructuredData data={websiteSchema()} />
+      <StructuredData data={{
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Kinshow Blog',
+        url: 'https://kinshow.vercel.app/blog',
+        description: 'Guides, recommendations, lists, and tips for finding what to watch.',
+        inLanguage: 'en-us',
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: posts.map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: p.title,
+            url: `https://kinshow.vercel.app/blog/${p.slug}`
+          }))
+        }
+      }} />
       <StructuredData data={breadcrumbSchema([
         { name: 'Home', url: 'https://kinshow.vercel.app/' },
         { name: 'Blog', url: 'https://kinshow.vercel.app/blog' }
