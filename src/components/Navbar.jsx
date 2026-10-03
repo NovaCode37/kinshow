@@ -12,6 +12,7 @@ export default function Navbar({ watchlistCount }) {
   const [results, setResults] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchErr, setSearchErr] = useState(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,6 +36,14 @@ export default function Navbar({ watchlistCount }) {
     setSearchHistory(removeSearchTerm(timestamp));
   }, []);
 
+  const resetSearch = useCallback(() => {
+    clearTimeout(timerRef.current);
+    setQuery('');
+    setResults([]);
+    setSearchErr(null);
+    setLoading(false);
+  }, []);
+
   const theme = themePreference || systemTheme;
 
   useEffect(() => {
@@ -49,7 +58,7 @@ export default function Navbar({ watchlistCount }) {
   };
 
   useEffect(() => { const h = () => setScrolled(window.scrollY > 30); window.addEventListener('scroll', h, { passive: true }); return () => window.removeEventListener('scroll', h); }, []);
-  useEffect(() => { setSearchOpen(false); setQuery(''); setResults([]); }, [location]);
+  useEffect(() => { setSearchOpen(false); resetSearch(); }, [location, resetSearch]);
   useEffect(() => {
     if (searchOpen) {
       loadSearchHistory();
@@ -63,8 +72,7 @@ export default function Navbar({ watchlistCount }) {
         e.preventDefault();
         if (searchOpen) {
           setSearchOpen(false);
-          setQuery('');
-          setResults([]);
+          resetSearch();
         } else {
           setSearchOpen(true);
         }
@@ -76,28 +84,35 @@ export default function Navbar({ watchlistCount }) {
       }
       if (e.key === 'Escape') {
         setSearchOpen(false);
-        setQuery('');
-        setResults([]);
+        resetSearch();
       }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [searchOpen]);
+  }, [searchOpen, resetSearch]);
 
   const search = useCallback((q) => {
     setQuery(q);
     clearTimeout(timerRef.current);
+    setSearchErr(null);
     if (!q.trim()) { setResults([]); return; }
     setLoading(true);
     timerRef.current = setTimeout(async () => {
       saveSearch(q);
-      const d = await searchMulti(q);
-      setResults(d?.results?.slice(0, 10) || []);
-      setLoading(false);
+      try {
+        const d = await searchMulti(q);
+        setResults(d?.results?.slice(0, 10) || []);
+        setSearchErr(d?.omdbDown && d?.tvDown ? 'failed' : d?.omdbDown ? 'no-movies' : null);
+      } catch {
+        setResults([]);
+        setSearchErr('failed');
+      } finally {
+        setLoading(false);
+      }
     }, 400);
   }, [saveSearch]);
 
-  const go = (type, id) => { saveSearch(query); navigate(`/detail/${type}/${id}`); setSearchOpen(false); setQuery(''); setResults([]); };
+  const go = (type, id) => { saveSearch(query); navigate(`/detail/${type}/${id}`); setSearchOpen(false); resetSearch(); };
   const useSearchHistory = (value) => { setQuery(value); search(value); };
   const isActive = (p) => location.pathname === p;
 
@@ -140,27 +155,24 @@ export default function Navbar({ watchlistCount }) {
         <Link to="/watchlist" className={`mobile-nav-item ${isActive('/watchlist') ? 'mobile-nav-item--active' : ''}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>My List</span></Link>
       </div>
       {searchOpen && (
-        <div className="search-overlay" onClick={(e) => { if (e.target === e.currentTarget) { setSearchOpen(false); setQuery(''); setResults([]); } }}>
+        <div className="search-overlay" onClick={(e) => { if (e.target === e.currentTarget) { setSearchOpen(false); resetSearch(); } }}>
           <div className="search-overlay-inner">
             <div className="search-overlay-input-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <input ref={inputRef} type="text" className="search-overlay-input" placeholder="Search movies, TV shows..." value={query} onChange={e => search(e.target.value)} aria-label="Search" />
                 {query && (
-  <button
+                <button
     className="search-overlay-clear"
     onClick={() => {
-      clearTimeout(timerRef.current);
-      setQuery('');
-      setResults([]);
-      setLoading(false);
+      resetSearch();
       inputRef.current?.focus();
     }}
     aria-label="Clear search"
   >
     ×
   </button>
-)}
-              <button className="search-overlay-close" onClick={() => { setSearchOpen(false); setQuery(''); setResults([]); }} aria-label="Close search"><kbd>ESC</kbd></button>
+                )}
+              <button className="search-overlay-close" onClick={() => { setSearchOpen(false); resetSearch(); }} aria-label="Close search"><kbd>ESC</kbd></button>
             </div>
             {loading && <div className="search-overlay-status">Searching...</div>}
             {results.length > 0 && (
@@ -176,7 +188,17 @@ export default function Navbar({ watchlistCount }) {
                 ))}
               </div>
             )}
-            {!loading && query && results.length === 0 && <div className="search-overlay-status">No results for "{query}"</div>}
+            {!loading && searchErr === 'failed' && (
+              <div className="search-overlay-status">
+                Couldn&rsquo;t reach the search servers.
+                <br />
+                <button className="search-overlay-retry" onClick={() => search(query)}>Try again</button>
+              </div>
+            )}
+            {!loading && searchErr === 'no-movies' && (
+              <div className="search-overlay-status">Movie results are temporarily unavailable — showing TV shows only.</div>
+            )}
+            {!loading && !searchErr && query && results.length === 0 && <div className="search-overlay-status">No results for "{query}"</div>}
             {!query && searchHistory.length > 0 && (
               <div className="search-history">
                 <div className="search-history-title">Recent searches</div>

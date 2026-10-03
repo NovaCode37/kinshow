@@ -113,7 +113,8 @@ export async function omdbSearchMulti(query) {
   const hit = cache(ck);
   if (hit) return hit;
   const d = await omdbFetch({ s: query });
-  if (!d || d.Response === 'False') return [];
+  if (!d) return null;
+  if (d.Response === 'False') return [];
   const results = (d.Search || []).filter(m => m.Type === 'movie').map(m => ({
     id: m.imdbID, imdbID: m.imdbID,
     title: m.Title, name: m.Title,
@@ -177,16 +178,20 @@ function _tvmazeToShow(d) {
 
 export function tvmazeToShow(d) { return _tvmazeToShow(d); }
 
-export async function tvmazeSearch(q) {
+async function tvmazeSearchRaw(q) {
   if (!q?.trim()) return [];
   const ck = 'tv_s_' + q;
   const hit = cache(ck);
   if (hit) return hit;
   const d = await fetchJSON(`${TVMAZE}/search/shows?q=${encodeURIComponent(q)}`, 8000);
-  if (!d) return [];
+  if (!d) return null;
   const shows = d.map(r => _tvmazeToShow(r)).filter(Boolean);
   save(ck, shows);
   return shows;
+}
+
+export async function tvmazeSearch(q) {
+  return (await tvmazeSearchRaw(q)) || [];
 }
 
 export async function tvmazeShow(id) {
@@ -267,13 +272,15 @@ export async function tvmazeMultipleShows(ids) {
 }
 
 export async function searchMulti(q) {
-  if (!q?.trim()) return { results: [] };
-  const [tvResults, omdbResults] = await Promise.all([tvmazeSearch(q), omdbSearchMulti(q)]);
+  if (!q?.trim()) return { results: [], omdbDown: false, tvDown: false };
+  const [tvRaw, omdbRaw] = await Promise.all([tvmazeSearchRaw(q), omdbSearchMulti(q)]);
+  const tvResults = tvRaw || [];
+  const omdbResults = omdbRaw || [];
   const localMovies = MOVIES.filter(m => m.title.toLowerCase().includes(q.toLowerCase())).map(m => ({ ...m, media_type: 'movie' }));
   const seenIds = new Set(localMovies.map(m => m.id));
   const extraMovies = omdbResults.filter(m => !seenIds.has(m.id));
   const items = [...localMovies, ...extraMovies, ...tvResults.map(s => ({ ...s, media_type: 'tv' }))];
-  return { results: items };
+  return { results: items, omdbDown: omdbRaw === null, tvDown: tvRaw === null };
 }
 
 export function getMovies(category = 'popular') {

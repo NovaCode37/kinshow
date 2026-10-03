@@ -563,6 +563,18 @@ main#content {
   color: var(--text-muted);
   font-size: 13px;
 }
+.search-overlay-retry {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.search-overlay-retry:hover {
+  background: var(--accent-hover);
+}
 .search-overlay-hint kbd {
   background: var(--surface);
   padding: 2px 6px;
