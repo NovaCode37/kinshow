@@ -2571,7 +2571,7 @@ main#content {
 .cookie-text h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
 .cookie-text p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
 .cookie-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.cookie-btn { padding: 10px 24px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--duration) var(--ease); border: none; }
+.cookie-btn { padding: 10px 24px; border-radius: 0; font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--duration) var(--ease); border: none; }
 .cookie-btn--accept { background: var(--accent); color: #fff; }
 .cookie-btn--accept:hover { background: var(--accent-hover); transform: translateY(-1px); }
 .cookie-btn--decline { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
